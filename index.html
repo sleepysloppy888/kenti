@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>КЕНТИ-2025</title>
-    <!-- Библиотека Supabase -->
-    <script src="https://cdn.jsdelivr.net"></script>
+    <!-- Подключаем библиотеку через другой сервис (Unpkg), его реже блокируют -->
+    <script src="https://unpkg.com"></script>
     <style>
         :root { --bg: #0a0a0a; --text: #ffffff; --accent: #3b82f6; --gray: #1f2937; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
@@ -27,7 +27,7 @@
 
     <section id="home">
         <h1>КЕНТИ-2025</h1>
-        <button onclick="initApp()">ПЕРЕЙТИ К ГОЛОСОВАНИЮ</button>
+        <button id="main-btn" onclick="initApp()">ПЕРЕЙТИ К ГОЛОСОВАНИЮ</button>
     </section>
 
     <section id="auth" class="hidden">
@@ -47,9 +47,8 @@
     </section>
 
 <script>
-    // ТВОИ ДАННЫЕ (Убедись, что KEY длинный и начинается на eyJ...)
     const SB_URL = 'https://djskycutugwvkbdujuue.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqc2t5Y3V0dWd3dmtiZHVqdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MTc3MjEsImV4cCI6MjA4NjE5MzcyMX0.j0N98NQKaIrP4ZvN0S7rax_Px13nBvJCZrnvYmiiqog';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqc2t5Y3V0dWd3dmtiZHVqdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MTYxODMsImV4cCI6MjA4NjE5MjE4M30.rL297W483k-19zsh8k_8Kz2jE3W2tXmO6IqA20vXU-o';
     
     let supabase;
     const nominationsData = {
@@ -62,24 +61,15 @@
     };
 
     async function initApp() {
-        // Проверка: загрузилась ли библиотека вообще
-        const lib = window.supabase;
-        if (!lib) {
-            alert("Ошибка: Библиотека Supabase не загружена! Отключи AdBlock или попробуй другой браузер.");
+        if (!window.supabase) {
+            alert("Все еще блокируется. Попробуй зайти с телефона или через другой браузер!");
             return;
         }
-
         if (!supabase) {
-            // Исправленный способ создания клиента
-            supabase = lib.createClient(SB_URL, SB_KEY);
+            supabase = window.supabase.createClient(SB_URL, SB_KEY);
         }
-        
         const savedUser = localStorage.getItem('kenti_user');
-        if (savedUser) { 
-            showPage('voting'); 
-        } else { 
-            showPage('auth'); 
-        }
+        if (savedUser) { showPage('voting'); } else { showPage('auth'); }
     }
 
     function showPage(id) {
@@ -130,18 +120,13 @@
                 list.appendChild(div);
             }
         } catch (e) {
-            console.error(e);
-            list.innerHTML = `<div style="color:red">Ошибка доступа. Проверь Policies в Supabase!</div>`;
+            list.innerHTML = `<div style="color:red">Ошибка базы. Проверь Policies в Supabase!</div>`;
         }
     }
 
     async function vote(c, n) {
         const currentUser = localStorage.getItem('kenti_user');
-        const { error } = await supabase.from('votes').insert([{ username: currentUser, nomination: c, nominee: n }]);
-        if (error) {
-            console.error(error);
-            alert("Ошибка при сохранении голоса!");
-        }
+        await supabase.from('votes').insert([{ username: currentUser, nomination: c, nominee: n }]);
         render();
     }
 
@@ -149,8 +134,12 @@
         localStorage.removeItem('kenti_user');
         location.reload();
     }
-</script>
 
+    if (localStorage.getItem('kenti_user') && window.supabase) {
+        setTimeout(initApp, 500);
+    }
+</script>
 </body>
 </html>
+
 
