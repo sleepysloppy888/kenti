@@ -47,9 +47,9 @@
     </section>
 
 <script>
-    // Твои данные из Supabase
+    // ТВОИ ДАННЫЕ (Убедись, что KEY длинный и начинается на eyJ...)
     const SB_URL = 'https://djskycutugwvkbdujuue.supabase.co';
-    const SB_KEY = 'sb_publishable_3vdH5vysyxj9IeywZvKbog_PEHXte66';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqc2t5Y3V0dWd3dmtiZHVqdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MTc3MjEsImV4cCI6MjA4NjE5MzcyMX0.j0N98NQKaIrP4ZvN0S7rax_Px13nBvJCZrnvYmiiqog';
     
     let supabase;
     const nominationsData = {
@@ -61,12 +61,25 @@
         "Комфортик": ["Иван Горин", "lyskofelo", "admin_v_kedah666", "сыкло", "snaker mai", "sleepysloppy", "Fiven", "3DAROVO", "Zeus"]
     };
 
-    function initApp() {
-        if (!supabase) {
-            supabase = window.supabase.createClient(SB_URL, SB_KEY);
+    async function initApp() {
+        // Проверка: загрузилась ли библиотека вообще
+        const lib = window.supabase;
+        if (!lib) {
+            alert("Ошибка: Библиотека Supabase не загружена! Отключи AdBlock или попробуй другой браузер.");
+            return;
         }
+
+        if (!supabase) {
+            // Исправленный способ создания клиента
+            supabase = lib.createClient(SB_URL, SB_KEY);
+        }
+        
         const savedUser = localStorage.getItem('kenti_user');
-        if (savedUser) { showPage('voting'); } else { showPage('auth'); }
+        if (savedUser) { 
+            showPage('voting'); 
+        } else { 
+            showPage('auth'); 
+        }
     }
 
     function showPage(id) {
@@ -117,13 +130,18 @@
                 list.appendChild(div);
             }
         } catch (e) {
-            list.innerHTML = `<div style="color:red">Ошибка подключения. Проверь политики доступа (Policies) в Supabase!</div>`;
+            console.error(e);
+            list.innerHTML = `<div style="color:red">Ошибка доступа. Проверь Policies в Supabase!</div>`;
         }
     }
 
     async function vote(c, n) {
         const currentUser = localStorage.getItem('kenti_user');
-        await supabase.from('votes').insert([{ username: currentUser, nomination: c, nominee: n }]);
+        const { error } = await supabase.from('votes').insert([{ username: currentUser, nomination: c, nominee: n }]);
+        if (error) {
+            console.error(error);
+            alert("Ошибка при сохранении голоса!");
+        }
         render();
     }
 
@@ -131,10 +149,8 @@
         localStorage.removeItem('kenti_user');
         location.reload();
     }
-
-    if (localStorage.getItem('kenti_user')) {
-        setTimeout(initApp, 500);
-    }
 </script>
+
 </body>
 </html>
+
